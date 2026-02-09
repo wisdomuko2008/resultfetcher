@@ -4,12 +4,26 @@ const express = require('express');
 const twilio = require('twilio');
 const admin = require('firebase-admin');
 
-// ===== FIREBASE SETUP =====
-const serviceAccount = require('./serviceAccountKey.json'); // Your Firebase service account
+// ===== FIREBASE SETUP (FIXED FOR RENDER) =====
+let serviceAccount;
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+try {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    // This runs on Render using the Environment Variable you added
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  } else {
+    // This runs on your local computer using the physical file
+    serviceAccount = require('./serviceAccountKey.json');
+  }
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+  });
+  console.log("Firebase Admin initialized successfully.");
+} catch (error) {
+  console.error("Firebase initialization error:", error.message);
+}
+
 const db = admin.firestore();
 
 // ===== EXPRESS & TWILIO =====
@@ -87,3 +101,4 @@ app.post('/whatsapp', async (req, res) => {
 // ===== PORT =====
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`WhatsApp bot running on port ${PORT}`));
+          
